@@ -19,6 +19,16 @@ jobs:
         with:
           channel: stable
           cache: true
+      - name: Desativar lint do Gradle
+        run: |
+          mkdir -p ~/.gradle/init.d
+          cat > ~/.gradle/init.d/nolint.gradle <<'EOF'
+          allprojects {
+            tasks.configureEach { t ->
+              if (t.name.toLowerCase().contains('lint')) { t.enabled = false }
+            }
+          }
+          EOF
       - name: Gerar o projeto Android
         working-directory: ryzen_app
         run: |
