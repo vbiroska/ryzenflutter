@@ -1,0 +1,39 @@
+name: Build APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extrair o projeto
+        run: unzip -q ryzen_flutter.zip
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Gerar o projeto Android
+        working-directory: ryzen_app
+        run: |
+          flutter create --platforms=android --org com.ryzen --project-name ryzen .
+          rm -rf test
+          mkdir -p android/app/src/main/kotlin/com/ryzen/ryzen
+          cp android_patch/MainActivity.kt android/app/src/main/kotlin/com/ryzen/ryzen/MainActivity.kt
+          cp android_patch/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+      - name: Dependências
+        working-directory: ryzen_app
+        run: flutter pub get
+      - name: Compilar
+        working-directory: ryzen_app
+        run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ryzen-apk
+          path: ryzen_app/build/app/outputs/flutter-apk/app-release.apk
